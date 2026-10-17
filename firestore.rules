@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Astrovia reads and writes Firestore through the Express API.
+    // Firebase Admin bypasses these client rules after verifying the ID token.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

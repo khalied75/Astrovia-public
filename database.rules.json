@@ -1,0 +1,44 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "conversations": {
+      "$conversationId": {
+        ".read": "auth != null && (!data.exists() || data.child('participantA').val() === auth.uid || data.child('participantB').val() === auth.uid)",
+        ".write": "auth != null && ((!data.exists() && (newData.child('participantA').val() === auth.uid || newData.child('participantB').val() === auth.uid)) || data.child('participantA').val() === auth.uid || data.child('participantB').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['participants', 'participantA', 'participantB', 'profiles', 'updatedAt']) && newData.child('participantA').isString() && newData.child('participantB').isString() && newData.child('participantA').val() != newData.child('participantB').val() && newData.child('participants').child(newData.child('participantA').val()).val() === true && newData.child('participants').child(newData.child('participantB').val()).val() === true && (newData.child('participantA').val() === auth.uid || newData.child('participantB').val() === auth.uid) && (!data.exists() || (newData.child('participantA').val() === data.child('participantA').val() && newData.child('participantB').val() === data.child('participantB').val()))"
+      }
+    },
+    "userConversations": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".indexOn": ["updatedAt"],
+        "$conversationId": {
+          ".write": "auth != null && ((!newData.exists() && auth.uid === $uid) || (newData.exists() && (root.child('conversations').child($conversationId).child('participantA').val() === auth.uid || root.child('conversations').child($conversationId).child('participantB').val() === auth.uid) && (root.child('conversations').child($conversationId).child('participantA').val() === $uid || root.child('conversations').child($conversationId).child('participantB').val() === $uid)))",
+          ".validate": "newData.hasChildren(['otherUserId', 'otherUser', 'updatedAt']) && newData.child('otherUserId').isString() && newData.child('otherUserId').val() != $uid && (root.child('conversations').child($conversationId).child('participantA').val() === newData.child('otherUserId').val() || root.child('conversations').child($conversationId).child('participantB').val() === newData.child('otherUserId').val()) && (!newData.child('unreadCount').exists() || (newData.child('unreadCount').isNumber() && newData.child('unreadCount').val() >= 0))"
+        }
+      }
+    },
+    "messages": {
+      "$conversationId": {
+        ".read": "auth != null && (root.child('conversations').child($conversationId).child('participantA').val() === auth.uid || root.child('conversations').child($conversationId).child('participantB').val() === auth.uid)",
+        ".indexOn": ["createdAt"],
+        "$messageId": {
+          ".write": "auth != null && !data.exists() && (root.child('conversations').child($conversationId).child('participantA').val() === auth.uid || root.child('conversations').child($conversationId).child('participantB').val() === auth.uid) && newData.child('senderId').val() === auth.uid",
+          ".validate": "newData.hasChildren(['senderId', 'text', 'createdAt']) && newData.child('text').isString() && newData.child('text').val().length <= 2000 && (newData.child('text').val().length > 0 || (newData.child('imageUrl').isString() && newData.child('imageUrl').val().beginsWith('https://') && newData.child('imageUrl').val().length <= 2048)) && (!newData.child('imageUrl').exists() || (newData.child('imageUrl').isString() && newData.child('imageUrl').val().beginsWith('https://') && newData.child('imageUrl').val().length <= 2048))"
+        }
+      }
+    },
+    "notifications": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".indexOn": ["createdAt"],
+        "$notificationId": {
+          ".write": "auth != null && (auth.uid === $uid || (!data.exists() && newData.child('type').val() === 'message' && newData.child('senderId').val() === auth.uid && newData.child('recipientId').val() === $uid && (root.child('conversations').child(newData.child('conversationId').val()).child('participantA').val() === auth.uid || root.child('conversations').child(newData.child('conversationId').val()).child('participantB').val() === auth.uid) && (root.child('conversations').child(newData.child('conversationId').val()).child('participantA').val() === $uid || root.child('conversations').child(newData.child('conversationId').val()).child('participantB').val() === $uid)))",
+          ".validate": "newData.hasChildren(['type', 'recipientId', 'senderId', 'sender', 'preview', 'link', 'read', 'createdAt']) && newData.child('recipientId').val() === $uid && (newData.child('type').val() === 'message' || newData.child('type').val() === 'comment' || newData.child('type').val() === 'reply' || newData.child('type').val() === 'follow') && newData.child('senderId').isString() && newData.child('preview').isString() && newData.child('preview').val().length <= 160 && newData.child('link').isString() && newData.child('read').isBoolean()"
+        }
+      }
+    }
+  }
+}
